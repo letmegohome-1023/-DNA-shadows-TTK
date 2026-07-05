@@ -5,44 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>K-721 (Evelyn) TTK Test</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #f0f0f0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
-        #game-container { position: relative; width: 1000px; height: 600px; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); max-width: 100vw; max-height: 100vh; }
+        /* 모바일에서 화면 꾹 누를 때 텍스트 선택되거나 돋보기 뜨는 현상 방지 */
+        * { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; font-family: 'Malgun Gothic', sans-serif; }
         
-        /* 입력창 화면 */
-        #input-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .input-group { margin: 10px; display: flex; justify-content: space-between; width: 300px; }
-        .input-group input { width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #game-container { position: relative; width: 1000px; height: 600px; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); max-width: 100vw; max-height: 100vh; overflow: hidden; }
         
-        #start-btn { margin-top: 20px; padding: 10px 30px; font-size: 18px; background: #0064ff; color: white; border: none; cursor: pointer; border-radius: 5px; transition: 0.1s; }
+        /* 입력창 화면 (스크롤 가능하도록 수정) */
+        #input-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; z-index: 10; overflow-y: auto; padding: 40px 0; box-sizing: border-box; }
+        .input-group { margin: 8px; display: flex; justify-content: space-between; width: 320px; align-items: center; }
+        
+        /* 인풋 태그는 터치/선택이 가능해야 함 */
+        .input-group input { width: 100px; padding: 5px; border: 1px solid #ccc; border-radius: 3px; user-select: auto; -webkit-user-select: auto; touch-action: auto; font-size: 16px; }
+        
+        #start-btn { margin-top: 20px; padding: 12px 40px; font-size: 18px; background: #0064ff; color: white; border: none; cursor: pointer; border-radius: 5px; transition: 0.1s; margin-bottom: 40px; }
         #start-btn:active { background: #004ecc; transform: scale(0.95); }
         
         #gameCanvas { display: none; }
         
         /* UI 레이어 */
         #ui-layer { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .btn { position: absolute; background: rgba(255, 0, 0, 0.5); pointer-events: auto; user-select: none; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 20px; touch-action: none; }
+        .btn { position: absolute; background: rgba(255, 0, 0, 0.5); pointer-events: auto; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 20px; z-index: 20; }
         
         /* 모바일 조작키 위치 */
         #btn-left { bottom: 40px; left: 20px; width: 60px; height: 60px; }
         #btn-right { bottom: 40px; left: 160px; width: 60px; height: 60px; }
-        #btn-jump { bottom: 100px; left: 90px; width: 60px; height: 60px; }
+        #btn-jump { bottom: 120px; left: 90px; width: 60px; height: 60px; }
         #btn-atk { bottom: 40px; left: 90px; width: 60px; height: 60px; background: rgba(255, 0, 0, 0.8); }
         #btn-skill { bottom: 40px; right: 40px; width: 80px; height: 80px; background: rgba(0, 100, 255, 0.7); }
         
         #cooldown-text { position: absolute; bottom: 125px; right: 55px; color: white; font-weight: bold; text-shadow: 1px 1px 2px black; font-size: 18px; }
+        
+        #game-over { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: red; font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px black; z-index: 30; text-align: center; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <div id="input-screen">
-        <h2>Evelyn (K-721) TTK 테스트 설정</h2>
-        <div class="input-group"><label>스킬 쿨타임 (m초):</label><input type="number" id="val-m" value="3" step="0.1"></div>
-        <div class="input-group"><label>이동 거리 (n블럭):</label><input type="number" id="val-n" value="5"></div>
-        <div class="input-group"><label>스킬 데미지 (k):</label><input type="number" id="val-k" value="100"></div>
-        <div class="input-group"><label>적 체력 (r):</label><input type="number" id="val-r" value="50"></div>
-        <div class="input-group"><label>일반 데미지 (l):</label><input type="number" id="val-l" value="20"></div>
-        <button id="start-btn">다음</button>
+        <h2>Evelyn TTK 테스트 설정</h2>
+        <div class="input-group"><label>에블린 체력:</label><input type="number" id="val-php" value="500"></div>
+        <div class="input-group"><label>스킬 쿨타임 (초):</label><input type="number" id="val-m" value="3" step="0.1"></div>
+        <div class="input-group"><label>스킬 이동 거리 (블럭):</label><input type="number" id="val-n" value="5"></div>
+        <div class="input-group"><label>스킬 데미지:</label><input type="number" id="val-k" value="100"></div>
+        <hr style="width: 320px; border: 0.5px solid #ddd; margin: 10px 0;">
+        <div class="input-group"><label>일반공격 쿨타임 (초):</label><input type="number" id="val-acd" value="0.3" step="0.1"></div>
+        <div class="input-group"><label>일반 데미지:</label><input type="number" id="val-l" value="20"></div>
+        <div class="input-group"><label>크리티컬 확률 (%):</label><input type="number" id="val-crate" value="20"></div>
+        <div class="input-group"><label>크리티컬 뎀증 (%):</label><input type="number" id="val-cdmg" value="50"></div>
+        <hr style="width: 320px; border: 0.5px solid #ddd; margin: 10px 0;">
+        <div class="input-group"><label>몬스터 스폰량 (마리):</label><input type="number" id="val-mspawn" value="3"></div>
+        <div class="input-group"><label>몬스터 체력:</label><input type="number" id="val-r" value="50"></div>
+        <div class="input-group"><label>몬스터 공격력:</label><input type="number" id="val-matk" value="10"></div>
+        
+        <button id="start-btn">테스트 시작</button>
     </div>
 
     <canvas id="gameCanvas" width="1000" height="600"></canvas>
@@ -55,44 +71,41 @@
         <div id="btn-skill" class="btn">SKILL</div>
         <div id="cooldown-text">0.0s</div>
     </div>
+    
+    <div id="game-over">GAME OVER<br><span style="font-size: 20px; color: white;">새로고침(F5)하여 다시 시작</span></div>
 </div>
 
 <script>
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const inputScreen = document.getElementById('input-screen');
     const uiLayer = document.getElementById('ui-layer');
     const startBtn = document.getElementById('start-btn');
+    const gameOverScreen = document.getElementById('game-over');
     
-    // 이미지 확장자 .png
     const imgPlayer = new Image(); imgPlayer.src = 'k-721.png';
     const imgMob = new Image(); imgMob.src = 'mob-1.png';
 
-    let m, n, k, r, l;
+    // 밸런스 변수
+    let m, n, k, r, l, pMaxHp, mAtk, aCd, cRate, cDmg, mSpawn;
     let cameraX = 0;
     let keys = {};
     let touchControls = { left: false, right: false };
+    let isGameOver = false;
 
     let player = {
         x: 200, y: 440, width: 60, height: 60, velY: 0, isJumping: false, facingRight: true,
-        lastAtkTime: 0, lastSkillTime: 0, attackDuration: 0, isAttacking: false,
+        hp: 500, lastAtkTime: 0, lastSkillTime: 0, attackDuration: 0, isAttacking: false,
         isDashing: false, dashVelocityX: 0, dashTicksRemaining: 0 
     };
     const DASH_DURATION_TICKS = 10; 
     
     let waterPath = { active: false, x: 0, width: 0, timer: 0 };
     let mobs = [];
-    
-    let platforms = [
-        { x: 400, y: 380, width: 120, height: 20 },
-        { x: 650, y: 280, width: 120, height: 20 },
-        { x: 950, y: 350, width: 150, height: 20 },
-        { x: 1300, y: 300, width: 120, height: 20 },
-        { x: 1600, y: 400, width: 100, height: 20 },
-        { x: 1900, y: 250, width: 150, height: 20 },
-        { x: 2300, y: 350, width: 120, height: 20 }
-    ];
+    let platforms = [];
+    let damageTexts = []; 
+    let maxMapX = 0; 
 
     window.addEventListener('keydown', e => keys[e.code] = true);
     window.addEventListener('keyup', e => keys[e.code] = false);
@@ -100,13 +113,23 @@ window.onload = function() {
     function setupTouch(id, actionOn, actionOff) {
         const btn = document.getElementById(id);
         if(!btn) return;
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); actionOn(); });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); actionOff(); });
-        btn.addEventListener('touchcancel', (e) => { e.preventDefault(); actionOff(); });
         
-        btn.addEventListener('mousedown', actionOn);
-        btn.addEventListener('mouseup', actionOff);
-        btn.addEventListener('mouseleave', actionOff);
+        btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            btn.setPointerCapture(e.pointerId);
+            actionOn();
+        });
+        
+        btn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            btn.releasePointerCapture(e.pointerId);
+            actionOff();
+        });
+        
+        btn.addEventListener('pointercancel', (e) => {
+            e.preventDefault();
+            actionOff();
+        });
     }
 
     setupTouch('btn-left', () => touchControls.left = true, () => touchControls.left = false);
@@ -116,15 +139,23 @@ window.onload = function() {
     setupTouch('btn-skill', () => skillDash(), () => {});
 
     startBtn.addEventListener('click', () => {
+        pMaxHp = parseFloat(document.getElementById('val-php').value) || 500;
         m = parseFloat(document.getElementById('val-m').value) || 3;
         n = parseFloat(document.getElementById('val-n').value) || 5;
         k = parseFloat(document.getElementById('val-k').value) || 100;
-        r = parseFloat(document.getElementById('val-r').value) || 50;
+        aCd = parseFloat(document.getElementById('val-acd').value) || 0.3;
         l = parseFloat(document.getElementById('val-l').value) || 20;
+        cRate = parseFloat(document.getElementById('val-crate').value) || 20;
+        cDmg = parseFloat(document.getElementById('val-cdmg').value) || 50;
+        r = parseFloat(document.getElementById('val-r').value) || 50;
+        mAtk = parseFloat(document.getElementById('val-matk').value) || 10;
+        mSpawn = parseInt(document.getElementById('val-mspawn').value) || 3; // 스폰량 변수 추가
 
-        mobs = Array.from({length: 10}, (_, i) => ({ 
-            x: 600 + i * 400, y: 450, width: 50, height: 50, hp: r, alive: true, facingRight: true 
-        }));
+        player.hp = pMaxHp;
+
+        maxMapX = 400;
+        platforms.push({ x: 400, y: 380, width: 120, height: 20 });
+        generateInfiniteMap();
 
         inputScreen.style.display = 'none';
         canvas.style.display = 'block';
@@ -132,8 +163,30 @@ window.onload = function() {
         requestAnimationFrame(gameLoop);
     });
 
+    function generateInfiniteMap() {
+        while (maxMapX < player.x + 2500) {
+            let pWidth = 100 + Math.random() * 150;
+            let pY = 250 + Math.random() * 150;
+            
+            platforms.push({ x: maxMapX + 150 + Math.random() * 200, y: pY, width: pWidth, height: 20 });
+            
+            // 입력받은 스폰량(mSpawn)을 기준으로 0~2마리를 랜덤으로 더 스폰합니다. (기본값 설정 시 구간당 3~5마리 생성)
+            let numMobs = mSpawn + Math.floor(Math.random() * 3);
+            for(let i=0; i<numMobs; i++) {
+                mobs.push({ 
+                    x: maxMapX + 200 + Math.random() * 300, 
+                    y: 450, 
+                    width: 50, height: 50, 
+                    hp: r, maxHp: r, 
+                    alive: true, facingRight: true, lastAtkTime: 0 
+                });
+            }
+            maxMapX += 600; 
+        }
+    }
+
     function jump() {
-        if (!player.isJumping) { player.velY = -14; player.isJumping = true; }
+        if (!player.isJumping && !isGameOver) { player.velY = -14; player.isJumping = true; }
     }
 
     function checkCollision(rect1, rect2) {
@@ -141,9 +194,26 @@ window.onload = function() {
                rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
     }
 
+    function getDamage(baseDmg) {
+        let isCrit = (Math.random() * 100) < cRate;
+        let finalDmg = isCrit ? baseDmg * (1 + cDmg / 100) : baseDmg;
+        return { damage: finalDmg, isCrit: isCrit };
+    }
+
+    function addDamageText(x, y, dmgInfo) {
+        damageTexts.push({
+            x: x, y: y,
+            text: dmgInfo.isCrit ? `CRIT! ${dmgInfo.damage.toFixed(0)}` : dmgInfo.damage.toFixed(0),
+            color: dmgInfo.isCrit ? '#ffcc00' : '#ffffff',
+            life: 30,
+            isCrit: dmgInfo.isCrit
+        });
+    }
+
     function basicAttack() {
+        if (isGameOver) return;
         const now = Date.now();
-        if (now - player.lastAtkTime > 300) {
+        if (now - player.lastAtkTime > aCd * 1000) {
             player.lastAtkTime = now;
             player.isAttacking = true;
             player.attackDuration = now;
@@ -153,7 +223,10 @@ window.onload = function() {
             
             mobs.forEach(mob => {
                 if (mob.alive && checkCollision(atkRect, mob)) {
-                    mob.hp -= l;
+                    let hit = getDamage(l);
+                    mob.hp -= hit.damage;
+                    addDamageText(mob.x, mob.y - 10, hit);
+                    
                     mob.x += player.facingRight ? 80 : -80; 
                     if (mob.hp <= 0) mob.alive = false;
                 }
@@ -162,23 +235,17 @@ window.onload = function() {
     }
 
     function skillDash() {
+        if (isGameOver) return;
         const now = Date.now();
         if (!player.isDashing && now - player.lastSkillTime > m * 1000) {
             player.lastSkillTime = now;
             
             let oldX = player.x;
             const facingDirection = player.facingRight ? 1 : -1;
-            
             let totalDashDistance = Math.abs(n) * 50; 
-            
             let finalX = player.x + (totalDashDistance * facingDirection);
-            waterPath = {
-                active: true,
-                x: Math.min(oldX, finalX),
-                width: totalDashDistance + player.width,
-                timer: now
-            };
             
+            waterPath = { active: true, x: Math.min(oldX, finalX), width: totalDashDistance + player.width, timer: now };
             player.isDashing = true;
             player.dashTicksRemaining = DASH_DURATION_TICKS;
             player.dashVelocityX = (totalDashDistance / DASH_DURATION_TICKS) * facingDirection;
@@ -186,7 +253,10 @@ window.onload = function() {
             let dashRect = { x: waterPath.x, y: player.y, width: waterPath.width, height: player.height };
             mobs.forEach(mob => {
                 if (mob.alive && checkCollision(dashRect, mob)) {
-                    mob.hp -= k;
+                    let hit = getDamage(k);
+                    mob.hp -= hit.damage;
+                    addDamageText(mob.x, mob.y - 10, hit);
+                    
                     if (mob.hp <= 0) mob.alive = false;
                 }
             });
@@ -194,10 +264,13 @@ window.onload = function() {
     }
 
     function update() {
+        if (isGameOver) return;
+
+        generateInfiniteMap();
+
         if (player.isDashing) {
             player.x += player.dashVelocityX;
             player.dashTicksRemaining--;
-            
             if (player.dashTicksRemaining <= 0) {
                 player.isDashing = false;
                 player.dashVelocityX = 0;
@@ -219,6 +292,7 @@ window.onload = function() {
 
         if (player.velY > 0) {
             for (let p of platforms) {
+                if (p.x < player.x - 1000) continue; 
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
                     if (player.y + player.height <= p.y + 5 && nextY + player.height >= p.y) {
                         nextY = p.y - player.height;
@@ -231,16 +305,31 @@ window.onload = function() {
         if (onGround) { player.isJumping = false; player.velY = 0; }
 
         cameraX = player.x - 300; 
+        let now = Date.now();
 
         mobs.forEach(mob => {
             if (mob.alive) {
                 let dist = Math.abs(mob.x - player.x);
-                if (dist < 800) {
+                if (dist < 800 && dist > 20) {
                     if (mob.x < player.x) { mob.x += 1.2; mob.facingRight = true; }
                     else if (mob.x > player.x) { mob.x -= 1.2; mob.facingRight = false; }
                 }
                 if (mob.y < 450) mob.y += 2;
                 if (mob.y >= 450) mob.y = 450;
+
+                let yDist = Math.abs(mob.y - player.y);
+                if (dist < 60 && yDist < 60 && now - mob.lastAtkTime > 1000) {
+                    mob.lastAtkTime = now;
+                    player.hp -= mAtk;
+                    
+                    damageTexts.push({ x: player.x, y: player.y - 20, text: `-${mAtk}`, color: '#ff5555', life: 30, isCrit: false });
+
+                    if (player.hp <= 0) {
+                        player.hp = 0;
+                        isGameOver = true;
+                        gameOverScreen.style.display = 'block';
+                    }
+                }
             }
         });
 
@@ -251,16 +340,19 @@ window.onload = function() {
     function draw() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.filter = 'blur(0.5px)'; 
         
         ctx.fillStyle = '#cccccc'; ctx.fillRect(0, 500, canvas.width, canvas.height - 500);
-        ctx.fillStyle = '#888888'; platforms.forEach(p => ctx.fillRect(p.x - cameraX, p.y, p.width, p.height));
+        
+        ctx.fillStyle = '#888888'; 
+        platforms.forEach(p => {
+            if (p.x - cameraX > -200 && p.x - cameraX < canvas.width) {
+                ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
+            }
+        });
 
         mobs.forEach(mob => {
-            if (mob.alive) {
+            if (mob.alive && mob.x - cameraX > -100 && mob.x - cameraX < canvas.width + 100) {
                 ctx.save();
-                // [수정 완료] 몬스터 반전 조건 픽스! (mob.facingRight 반전)
                 if (mob.facingRight) {
                     ctx.scale(-1, 1);
                     ctx.translate(-(mob.x - cameraX + mob.width), 0);
@@ -269,37 +361,57 @@ window.onload = function() {
                 }
 
                 if(imgMob.complete && imgMob.naturalWidth !== 0) ctx.drawImage(imgMob, 0, mob.y, mob.width, mob.height);
-                else { ctx.fillStyle = 'black'; ctx.fillRect(0, mob.y, mob.width, mob.height); }
+                else { ctx.fillStyle = '#444'; ctx.fillRect(0, mob.y, mob.width, mob.height); }
                 ctx.restore(); 
                 
-                ctx.fillStyle = 'red'; ctx.fillRect(mob.x - cameraX, mob.y - 15, 50 * (mob.hp / r), 5);
+                ctx.fillStyle = 'black'; ctx.fillRect(mob.x - cameraX, mob.y - 17, 50, 7);
+                ctx.fillStyle = 'red'; ctx.fillRect(mob.x - cameraX + 1, mob.y - 16, 48 * (mob.hp / mob.maxHp), 5);
             }
         });
-
-        ctx.filter = 'none'; 
 
         if (waterPath.active && Date.now() - waterPath.timer < 300) {
             ctx.fillStyle = 'rgba(0, 150, 255, 0.5)';
             ctx.fillRect(waterPath.x - cameraX, player.y + player.height - 10, waterPath.width, 10);
         }
 
-        ctx.save();
-        if (!player.facingRight) { 
-            ctx.scale(-1, 1); 
-            ctx.translate(-(player.x - cameraX + player.width), 0); 
-        } else { 
-            ctx.translate(player.x - cameraX, 0); 
-        }
-        
-        if(imgPlayer.complete && imgPlayer.naturalWidth !== 0) ctx.drawImage(imgPlayer, 0, player.y, player.width, player.height);
-        else { ctx.fillStyle = 'blue'; ctx.fillRect(0, player.y, player.width, player.height); }
-        ctx.restore();
+        if (!isGameOver) {
+            ctx.save();
+            if (!player.facingRight) { 
+                ctx.scale(-1, 1); 
+                ctx.translate(-(player.x - cameraX + player.width), 0); 
+            } else { 
+                ctx.translate(player.x - cameraX, 0); 
+            }
+            
+            if(imgPlayer.complete && imgPlayer.naturalWidth !== 0) ctx.drawImage(imgPlayer, 0, player.y, player.width, player.height);
+            else { ctx.fillStyle = 'blue'; ctx.fillRect(0, player.y, player.width, player.height); }
+            ctx.restore();
 
-        if (player.isAttacking && Date.now() - player.attackDuration < 150) {
-            ctx.font = '30px Arial';
-            let fistEmoji = player.facingRight ? '🤜' : '🤛';
-            let fistX = player.facingRight ? player.x - cameraX + player.width + 5 : player.x - cameraX - 40;
-            ctx.fillText(fistEmoji, fistX, player.y + 40);
+            if (player.isAttacking && Date.now() - player.attackDuration < 150) {
+                ctx.font = '30px Arial';
+                let fistEmoji = player.facingRight ? '🤜' : '🤛';
+                let fistX = player.facingRight ? player.x - cameraX + player.width + 5 : player.x - cameraX - 40;
+                ctx.fillText(fistEmoji, fistX, player.y + 40);
+            }
+            
+            ctx.fillStyle = 'black'; ctx.fillRect(player.x - cameraX, player.y - 22, 60, 10);
+            ctx.fillStyle = 'lime'; ctx.fillRect(player.x - cameraX + 1, player.y - 21, 58 * (player.hp / pMaxHp), 8);
+        }
+
+        for (let i = damageTexts.length - 1; i >= 0; i--) {
+            let dt = damageTexts[i];
+            ctx.fillStyle = dt.color;
+            ctx.font = dt.isCrit ? 'bold 24px Arial' : 'bold 18px Arial';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
+            
+            dt.y -= 1;
+            
+            ctx.strokeText(dt.text, dt.x - cameraX, dt.y);
+            ctx.fillText(dt.text, dt.x - cameraX, dt.y);
+            
+            dt.life--;
+            if (dt.life <= 0) damageTexts.splice(i, 1);
         }
     }
 
@@ -308,7 +420,7 @@ window.onload = function() {
         draw();
         requestAnimationFrame(gameLoop);
     }
-};
+});
 </script>
 </body>
 </html>
